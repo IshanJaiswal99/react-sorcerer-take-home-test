@@ -1,12 +1,16 @@
-import React from "react";
+import React, { useRef } from "react";
 import "./App.css";
 import { ContentBlock, Editor, EditorState, RichUtils } from "draft-js";
+import { handleHeading } from "./utils/headerLogic";
+import { handleUnderline } from "./utils/underlineLogic";
+import { handleRed } from "./utils/redLogic";
+import { handleBold } from "./utils/boldLogic";
 
 function App() {
   const [editorState, setEditorState] = React.useState(() =>
     EditorState.createEmpty()
   );
-
+  const childRef = useRef(null);
   const handleChange = (editorState: EditorState) => {
     const selection = editorState.getSelection();
     const content = editorState.getCurrentContent();
@@ -17,111 +21,48 @@ function App() {
     const blockKey = block.getKey();
     console.log(block.toObject());
     if (text.startsWith("# ")) {
-      const blockSelection = selectionState.merge({
-        anchorKey: blockKey,
-        anchorOffset: 0,
-        focusKey: blockKey,
-        focusOffset: text.indexOf(" ") + 1,
-      });
-      const updatedContentState = contentState.merge({
-        //@ts-ignore
-        blockMap: contentState.getBlockMap().merge({
-          [blockKey]: block.merge({
-            type: "header-one",
-            text: text.slice(2),
-          }),
-        }),
-      });
-      const newEditorState = EditorState.push(
-        editorState,
-        //@ts-ignore
-        updatedContentState,
-        "change-block-data"
+      const newEditorState = handleHeading(
+        selectionState,
+        contentState,
+        block,
+        text,
+        blockKey,
+        editorState
       );
-      setEditorState(
-        EditorState.forceSelection(newEditorState, blockSelection)
-      );
+      setEditorState(newEditorState);
       return true;
     } else if (text.startsWith("*** ")) {
-      const blockSelection = selectionState.merge({
-        anchorKey: blockKey,
-        anchorOffset: 0,
-        focusKey: blockKey,
-        focusOffset: text.indexOf(" ") + 1,
-      });
-      const updatedContentState = contentState.merge({
-        //@ts-ignore
-        blockMap: contentState.getBlockMap().merge({
-          [blockKey]: block.merge({
-            type: "block-underline",
-            text: text.slice(4),
-          }),
-        }),
-      });
-      const newEditorState = EditorState.push(
-        editorState,
-        //@ts-ignore
-        updatedContentState,
-        "change-block-data"
+      const newEditorState = handleUnderline(
+        selectionState,
+        contentState,
+        block,
+        text,
+        blockKey,
+        editorState
       );
-      // setEditorState(boldEditorState);
-      setEditorState(
-        EditorState.forceSelection(newEditorState, blockSelection)
-      );
+      setEditorState(newEditorState);
       return true;
     } else if (text.startsWith("** ")) {
-      const blockSelection = selectionState.merge({
-        anchorKey: blockKey,
-        anchorOffset: 0,
-        focusKey: blockKey,
-        focusOffset: text.indexOf(" ") + 1,
-      });
-      const updatedContentState = contentState.merge({
-        //@ts-ignore
-        blockMap: contentState.getBlockMap().merge({
-          [blockKey]: block.merge({
-            type: "block-red",
-            text: text.slice(3),
-          }),
-        }),
-      });
-      const newEditorState = EditorState.push(
-        editorState,
-        //@ts-ignore
-        updatedContentState,
-        "change-block-data"
+      const newEditorState = handleRed(
+        selectionState,
+        contentState,
+        block,
+        text,
+        blockKey,
+        editorState
       );
-      // setEditorState(boldEditorState);
-      setEditorState(
-        EditorState.forceSelection(newEditorState, blockSelection)
-      );
+      setEditorState(newEditorState);
       return true;
     } else if (text.startsWith("* ")) {
-      const blockSelection = selectionState.merge({
-        anchorKey: blockKey,
-        anchorOffset: 0,
-        focusKey: blockKey,
-        focusOffset: text.indexOf(" ") + 1,
-      });
-      const updatedContentState = contentState.merge({
-        //@ts-ignore
-        blockMap: contentState.getBlockMap().merge({
-          [blockKey]: block.merge({
-            type: "block-bold",
-            text: text.slice(2),
-          }),
-        }),
-      });
-      const newEditorState = EditorState.push(
-        editorState,
-        //@ts-ignore
-        updatedContentState,
-        "change-block-data"
+      const newEditorState = handleBold(
+        selectionState,
+        contentState,
+        block,
+        text,
+        blockKey,
+        editorState
       );
-      // setEditorState(boldEditorState);
-      setEditorState(
-        EditorState.forceSelection(newEditorState, blockSelection)
-      );
+      setEditorState(newEditorState);
       return true;
     }
     setEditorState(editorState);
@@ -141,21 +82,29 @@ function App() {
     }
   }
   return (
-    <>
+    <div className="container">
       <div className="titleBar">
         <span></span>
         <p>Demo editor by Ishan Jaiswal</p>
         <button>Save</button>
       </div>
-      <div>
+
+      <div
+        onClick={() => {
+          //@ts-ignore
+          childRef.current && childRef.current.focus();
+        }}
+        className="editor"
+      >
         <Editor
+          ref={childRef}
           editorState={editorState}
           onChange={handleChange}
           //@ts-ignore
           blockStyleFn={myBlockStyleFn}
         />
       </div>
-    </>
+    </div>
   );
 }
 
