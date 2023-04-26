@@ -1,6 +1,12 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import "./App.css";
-import { ContentBlock, Editor, EditorState, RichUtils } from "draft-js";
+import {
+  ContentBlock,
+  Editor,
+  EditorState,
+  convertFromRaw,
+  convertToRaw,
+} from "draft-js";
 import { handleHeading } from "./utils/headerLogic";
 import { handleUnderline } from "./utils/underlineLogic";
 import { handleRed } from "./utils/redLogic";
@@ -11,6 +17,14 @@ function App() {
     EditorState.createEmpty()
   );
   const childRef = useRef(null);
+  useEffect(() => {
+    let localItem = localStorage.getItem("editorContext");
+    if (localItem) {
+      const context = convertFromRaw(JSON.parse(localItem));
+      console.log(context.toObject());
+      setEditorState(EditorState.createWithContent(context));
+    }
+  }, []);
   const handleChange = (editorState: EditorState) => {
     const selection = editorState.getSelection();
     const content = editorState.getCurrentContent();
@@ -66,9 +80,18 @@ function App() {
       return true;
     }
     setEditorState(editorState);
+
     return false;
   };
-
+  const handleSave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    localStorage.setItem(
+      "editorContext",
+      JSON.stringify(convertToRaw(editorState.getCurrentContent()))
+    );
+    // console.log(editorState.getCurrentContent().toObject());
+  };
   function myBlockStyleFn(contentBlock: ContentBlock) {
     const type = contentBlock.getType();
     if (type === "block-bold") {
@@ -86,7 +109,7 @@ function App() {
       <div className="titleBar">
         <span></span>
         <p>Demo editor by Ishan Jaiswal</p>
-        <button>Save</button>
+        <button onClick={handleSave}>Save</button>
       </div>
 
       <div
